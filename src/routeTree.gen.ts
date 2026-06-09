@@ -14,9 +14,14 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
+import { Route as AppTemplatesRouteImport } from './routes/_app.templates'
+import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppRecordRouteImport } from './routes/_app.record'
+import { Route as AppPricingRouteImport } from './routes/_app.pricing'
+import { Route as AppHistoryRouteImport } from './routes/_app.history'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
 import { Route as AppStudioIndexRouteImport } from './routes/_app.studio.index'
+import { Route as AppStudioIdRouteImport } from './routes/_app.studio.$id'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -42,9 +47,29 @@ const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
   path: '/api/transcribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppTemplatesRoute = AppTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRecordRoute = AppRecordRouteImport.update({
   id: '/record',
   path: '/record',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPricingRoute = AppPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHistoryRoute = AppHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
   getParentRoute: () => AppRoute,
 } as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
@@ -57,14 +82,24 @@ const AppStudioIndexRoute = AppStudioIndexRouteImport.update({
   path: '/studio/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppStudioIdRoute = AppStudioIdRouteImport.update({
+  id: '/studio/$id',
+  path: '/studio/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRoute
+  '/history': typeof AppHistoryRoute
+  '/pricing': typeof AppPricingRoute
   '/record': typeof AppRecordRoute
+  '/settings': typeof AppSettingsRoute
+  '/templates': typeof AppTemplatesRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/studio/$id': typeof AppStudioIdRoute
   '/studio/': typeof AppStudioIndexRoute
 }
 export interface FileRoutesByTo {
@@ -72,8 +107,13 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRoute
+  '/history': typeof AppHistoryRoute
+  '/pricing': typeof AppPricingRoute
   '/record': typeof AppRecordRoute
+  '/settings': typeof AppSettingsRoute
+  '/templates': typeof AppTemplatesRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/studio/$id': typeof AppStudioIdRoute
   '/studio': typeof AppStudioIndexRoute
 }
 export interface FileRoutesById {
@@ -83,8 +123,13 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/history': typeof AppHistoryRoute
+  '/_app/pricing': typeof AppPricingRoute
   '/_app/record': typeof AppRecordRoute
+  '/_app/settings': typeof AppSettingsRoute
+  '/_app/templates': typeof AppTemplatesRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/_app/studio/$id': typeof AppStudioIdRoute
   '/_app/studio/': typeof AppStudioIndexRoute
 }
 export interface FileRouteTypes {
@@ -94,8 +139,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/dashboard'
+    | '/history'
+    | '/pricing'
     | '/record'
+    | '/settings'
+    | '/templates'
     | '/api/transcribe'
+    | '/studio/$id'
     | '/studio/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -103,8 +153,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/dashboard'
+    | '/history'
+    | '/pricing'
     | '/record'
+    | '/settings'
+    | '/templates'
     | '/api/transcribe'
+    | '/studio/$id'
     | '/studio'
   id:
     | '__root__'
@@ -113,8 +168,13 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_app/dashboard'
+    | '/_app/history'
+    | '/_app/pricing'
     | '/_app/record'
+    | '/_app/settings'
+    | '/_app/templates'
     | '/api/transcribe'
+    | '/_app/studio/$id'
     | '/_app/studio/'
   fileRoutesById: FileRoutesById
 }
@@ -163,11 +223,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/templates': {
+      id: '/_app/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof AppTemplatesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/settings': {
+      id: '/_app/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/record': {
       id: '/_app/record'
       path: '/record'
       fullPath: '/record'
       preLoaderRoute: typeof AppRecordRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/pricing': {
+      id: '/_app/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof AppPricingRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/history': {
+      id: '/_app/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof AppHistoryRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/dashboard': {
@@ -184,18 +272,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppStudioIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/studio/$id': {
+      id: '/_app/studio/$id'
+      path: '/studio/$id'
+      fullPath: '/studio/$id'
+      preLoaderRoute: typeof AppStudioIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
+  AppHistoryRoute: typeof AppHistoryRoute
+  AppPricingRoute: typeof AppPricingRoute
   AppRecordRoute: typeof AppRecordRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppTemplatesRoute: typeof AppTemplatesRoute
+  AppStudioIdRoute: typeof AppStudioIdRoute
   AppStudioIndexRoute: typeof AppStudioIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
+  AppHistoryRoute: AppHistoryRoute,
+  AppPricingRoute: AppPricingRoute,
   AppRecordRoute: AppRecordRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppTemplatesRoute: AppTemplatesRoute,
+  AppStudioIdRoute: AppStudioIdRoute,
   AppStudioIndexRoute: AppStudioIndexRoute,
 }
 
