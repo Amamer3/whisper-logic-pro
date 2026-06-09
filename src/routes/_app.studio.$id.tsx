@@ -3,11 +3,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  Copy, Download, Sparkles, Loader2, Save, RotateCw, Volume2, Pause as PauseIcon, FileText, ChevronLeft
+  Copy, Download, Sparkles, Loader2, Save, RotateCw, Volume2, FileText, ChevronLeft, Mail, Eye, Pencil
 } from "lucide-react";
+import { FormattedOutput } from "@/components/formatted-output";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -15,6 +21,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { OUTPUT_TYPES, type OutputTypeId } from "@/lib/output-types";
 import { generateContent, suggestOutputs } from "@/lib/ai.functions";
+import { sendEmail } from "@/lib/email.functions";
+import { parseGeneratedEmail } from "@/lib/parse-email";
 import { textToSpeech, ELEVEN_VOICES } from "@/lib/tts.functions";
 import { currentPeriod } from "@/lib/format";
 
@@ -30,6 +38,7 @@ function StudioDetail() {
   const generate = useServerFn(generateContent);
   const suggest = useServerFn(suggestOutputs);
   const speak = useServerFn(textToSpeech);
+  const mail = useServerFn(sendEmail);
 
   const [transcriptText, setTranscriptText] = useState("");
   const [savingTranscript, setSavingTranscript] = useState(false);
@@ -44,6 +53,13 @@ function StudioDetail() {
   const [voiceId, setVoiceId] = useState(ELEVEN_VOICES[0].id);
   const [ttsLoading, setTtsLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+  const [sendOpen, setSendOpen] = useState(false);
+  const [sendTo, setSendTo] = useState("");
+  const [sendSubject, setSendSubject] = useState("");
+  const [sendBody, setSendBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [outputView, setOutputView] = useState<"preview" | "edit">("preview");
 
   // Load transcript
   const { data: transcript } = useQuery({
@@ -133,6 +149,7 @@ function StudioDetail() {
         },
       });
       setOutput(result.content);
+      setOutputView("preview");
 
       // Persist
       const { data: row, error } = await supabase
@@ -207,6 +224,38 @@ function StudioDetail() {
       toast.error(e instanceof Error ? e.message : "TTS failed");
     } finally {
       setTtsLoading(false);
+    }
+  }
+
+  function openSendDialog() {
+    if (!output.trim()) return;
+    const parsed = parseGeneratedEmail(output);
+    setSendSubject(parsed.subject);
+    setSendBody(parsed.body);
+    setSendOpen(true);
+  }
+
+  async function runSendEmail() {
+    if (!sendTo.trim() || !sendSubject.trim() || !sendBody.trim()) {
+      toast.error("Recipient, subject, and message are required");
+      return;
+    }
+    setSending(true);
+    try {
+      await mail({
+        data: {
+          to: sendTo.trim(),
+          subject: sendSubject.trim(),
+          text: sendBody.trim(),
+        },
+      });
+      toast.success(`Email sent to ${sendTo.trim()}`);
+      setSendOpen(false);
+      setSendTo("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to send email");
+    } finally {
+      setSending(false);
     }
   }
 
@@ -311,21 +360,56 @@ function StudioDetail() {
 
           {(output || generating) && (
             <div className="mt-5">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">Output</span>
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-muted-foreground">Output</span>
+                  <div className="flex rounded-md border border-border p-0.5">
+                    <Button
+                      size="sm"
+                      variant={outputView === "preview" ? "secondary" : "ghost"}
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => setOutputView("preview")}
+                    >
+                      <Eye className="h-3 w-3" /> Preview
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={outputView === "edit" ? "secondary" : "ghost"}
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => setOutputView("edit")}
+                    >
+                      <Pencil className="h-3 w-3" /> Edit
+                    </Button>
+                  </div>
+                </div>
                 <div className="flex gap-1.5">
+                  <Button size="sm" variant="ghost" onClick={openSendDialog} title="Send email">
+                    <Mail className="h-3.5 w-3.5" />
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={copyOutput}><Copy className="h-3.5 w-3.5" /></Button>
                   <Button size="sm" variant="ghost" onClick={downloadOutput}><Download className="h-3.5 w-3.5" /></Button>
                   <Button size="sm" variant="ghost" onClick={saveEditedOutput} disabled={!outputId}><Save className="h-3.5 w-3.5" /></Button>
                   <Button size="sm" variant="ghost" onClick={runGenerate} disabled={generating}><RotateCw className="h-3.5 w-3.5" /></Button>
                 </div>
               </div>
-              <Textarea
-                value={output}
-                onChange={(e) => setOutput(e.target.value)}
-                className="min-h-[280px] resize-none text-sm leading-relaxed"
-                placeholder={generating ? "Thinking…" : ""}
-              />
+              {outputView === "preview" ? (
+                <div className="min-h-[280px] rounded-md border border-border bg-secondary/40 p-4">
+                  {generating ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Thinking…
+                    </div>
+                  ) : (
+                    <FormattedOutput content={output} />
+                  )}
+                </div>
+              ) : (
+                <Textarea
+                  value={output}
+                  onChange={(e) => setOutput(e.target.value)}
+                  className="min-h-[280px] resize-none text-sm leading-relaxed"
+                  placeholder={generating ? "Thinking…" : ""}
+                />
+              )}
 
               {/* TTS */}
               <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -355,6 +439,56 @@ function StudioDetail() {
         </Card>
       </div>
 
+      <Dialog open={sendOpen} onOpenChange={setSendOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send email</DialogTitle>
+            <DialogDescription>
+              Deliver this output directly via MailerSend.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="send-to">To</Label>
+              <Input
+                id="send-to"
+                type="email"
+                placeholder="recipient@example.com"
+                value={sendTo}
+                onChange={(e) => setSendTo(e.target.value)}
+                autoComplete="email"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="send-subject">Subject</Label>
+              <Input
+                id="send-subject"
+                value={sendSubject}
+                onChange={(e) => setSendSubject(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="send-body">Message</Label>
+              <Textarea
+                id="send-body"
+                value={sendBody}
+                onChange={(e) => setSendBody(e.target.value)}
+                className="min-h-[180px] resize-none text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSendOpen(false)} disabled={sending}>
+              Cancel
+            </Button>
+            <Button onClick={runSendEmail} disabled={sending} className="gap-2">
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+              {sending ? "Sending…" : "Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Past outputs */}
       {(pastOutputs?.length ?? 0) > 0 && (
         <Card className="p-5">
@@ -370,9 +504,9 @@ function StudioDetail() {
             </TabsList>
             {pastOutputs!.map((o) => (
               <TabsContent key={o.id} value={o.id}>
-                <pre className="whitespace-pre-wrap rounded-md border border-border bg-secondary p-4 text-sm leading-relaxed">
-                  {o.content}
-                </pre>
+                <div className="rounded-md border border-border bg-secondary/40 p-4">
+                  <FormattedOutput content={o.content ?? ""} />
+                </div>
               </TabsContent>
             ))}
           </Tabs>
