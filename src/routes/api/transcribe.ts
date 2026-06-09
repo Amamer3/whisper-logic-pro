@@ -42,7 +42,7 @@ export const Route = createFileRoute("/api/transcribe")({
 
         // Forward to ElevenLabs
         const ev = new FormData();
-        ev.append("file", file, file instanceof File ? file.name : "audio.webm");
+        ev.append("file", file, file.name ?? "audio.webm");
         ev.append("model_id", "scribe_v2");
         ev.append("tag_audio_events", "true");
         ev.append("diarize", "true");
