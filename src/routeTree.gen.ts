@@ -14,7 +14,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
+import { Route as AppRecordRouteImport } from './routes/_app.record'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
+import { Route as AppStudioIndexRouteImport } from './routes/_app.studio.index'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -40,9 +42,19 @@ const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
   path: '/api/transcribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRecordRoute = AppRecordRouteImport.update({
+  id: '/record',
+  path: '/record',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppDashboardRoute = AppDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStudioIndexRoute = AppStudioIndexRouteImport.update({
+  id: '/studio/',
+  path: '/studio/',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -51,14 +63,18 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRoute
+  '/record': typeof AppRecordRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/studio/': typeof AppStudioIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/dashboard': typeof AppDashboardRoute
+  '/record': typeof AppRecordRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/studio': typeof AppStudioIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -67,7 +83,9 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/dashboard': typeof AppDashboardRoute
+  '/_app/record': typeof AppRecordRoute
   '/api/transcribe': typeof ApiTranscribeRoute
+  '/_app/studio/': typeof AppStudioIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -76,9 +94,18 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/dashboard'
+    | '/record'
     | '/api/transcribe'
+    | '/studio/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/reset-password' | '/dashboard' | '/api/transcribe'
+  to:
+    | '/'
+    | '/auth'
+    | '/reset-password'
+    | '/dashboard'
+    | '/record'
+    | '/api/transcribe'
+    | '/studio'
   id:
     | '__root__'
     | '/'
@@ -86,7 +113,9 @@ export interface FileRouteTypes {
     | '/auth'
     | '/reset-password'
     | '/_app/dashboard'
+    | '/_app/record'
     | '/api/transcribe'
+    | '/_app/studio/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -134,6 +163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/record': {
+      id: '/_app/record'
+      path: '/record'
+      fullPath: '/record'
+      preLoaderRoute: typeof AppRecordRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/dashboard': {
       id: '/_app/dashboard'
       path: '/dashboard'
@@ -141,15 +177,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppDashboardRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/studio/': {
+      id: '/_app/studio/'
+      path: '/studio'
+      fullPath: '/studio/'
+      preLoaderRoute: typeof AppStudioIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
 interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
+  AppRecordRoute: typeof AppRecordRoute
+  AppStudioIndexRoute: typeof AppStudioIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
+  AppRecordRoute: AppRecordRoute,
+  AppStudioIndexRoute: AppStudioIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
@@ -164,3 +211,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
