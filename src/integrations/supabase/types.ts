@@ -14,7 +14,253 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_outputs: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          model: string | null
+          output_type: string
+          prompt_used: string | null
+          title: string | null
+          transcript_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          output_type: string
+          prompt_used?: string | null
+          title?: string | null
+          transcript_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          model?: string | null
+          output_type?: string
+          prompt_used?: string | null
+          title?: string | null
+          transcript_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_outputs_transcript_id_fkey"
+            columns: ["transcript_id"]
+            isOneToOne: false
+            referencedRelation: "transcripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          plan: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          plan?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          plan?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      prompt_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          prompt: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          prompt: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          prompt?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recordings: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+          source: string
+          storage_path: string
+          title: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          source?: string
+          storage_path: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          source?: string
+          storage_path?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          plan: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          plan?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transcripts: {
+        Row: {
+          created_at: string
+          id: string
+          language: string | null
+          model: string | null
+          recording_id: string | null
+          text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language?: string | null
+          model?: string | null
+          recording_id?: string | null
+          text?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string | null
+          model?: string | null
+          recording_id?: string | null
+          text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcripts_recording_id_fkey"
+            columns: ["recording_id"]
+            isOneToOne: false
+            referencedRelation: "recordings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usage_counters: {
+        Row: {
+          created_at: string
+          generations_count: number
+          id: string
+          period: string
+          recordings_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          generations_count?: number
+          id?: string
+          period: string
+          recordings_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          generations_count?: number
+          id?: string
+          period?: string
+          recordings_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
