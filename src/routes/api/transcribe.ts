@@ -5,9 +5,9 @@ export const Route = createFileRoute("/api/transcribe")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apiKey = process.env.ELEVENLABS_API_KEY;
+        const apiKey = process.env.OPENAI_API_KEY?.trim();
         if (!apiKey) {
-          return new Response(JSON.stringify({ error: "ELEVENLABS_API_KEY not configured" }), { status: 500 });
+          return new Response(JSON.stringify({ error: "OPENAI_API_KEY not configured" }), { status: 500 });
         }
 
         // Auth check
@@ -40,33 +40,43 @@ export const Route = createFileRoute("/api/transcribe")({
         }
         const file = fileEntry as Blob & { name?: string };
 
-        // Forward to ElevenLabs
-        const ev = new FormData();
-        ev.append("file", file, file.name ?? "audio.webm");
-        ev.append("model_id", "scribe_v2");
-        ev.append("tag_audio_events", "true");
-        ev.append("diarize", "true");
-        if (languageCode) ev.append("language_code", languageCode);
+        const oai = new FormData();
+        oai.append("file", file, file.name ?? "audio.webm");
+        oai.append("model", "whisper-1");
+        oai.append("response_format", "verbose_json");
+        if (languageCode) oai.append("language", languageCode);
 
-        const evRes = await fetch("https://api.elevenlabs.io/v1/speech-to-text", {
+        const oaiRes = await fetch("https://api.openai.com/v1/audio/transcriptions", {
           method: "POST",
-          headers: { "xi-api-key": apiKey },
-          body: ev,
+          headers: { Authorization: `Bearer ${apiKey}` },
+          body: oai,
         });
 
-        if (!evRes.ok) {
-          const txt = await evRes.text();
-          return new Response(
-            JSON.stringify({ error: `Transcription failed: ${txt.slice(0, 300)}` }),
-            { status: evRes.status, headers: { "Content-Type": "application/json" } },
-          );
+        if (!oaiRes.ok) {
+          const txt = await oaiRes.text();
+          let message = `Transcription failed (${oaiRes.status})`;
+          try {
+            const parsed = JSON.parse(txt) as { error?: { message?: string } };
+            if (parsed.error?.message) message = parsed.error.message;
+          } catch {
+            if (txt) message = txt.slice(0, 300);
+          }
+          if (oaiRes.status === 401) {
+            message = "OpenAI API key is invalid or expired. Update OPENAI_API_KEY in your .env file.";
+          } else if (oaiRes.status === 429) {
+            message = "OpenAI rate limit reached. Please try again in a moment.";
+          }
+          return new Response(JSON.stringify({ error: message }), {
+            status: 502,
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
-        const result = (await evRes.json()) as { text?: string; language_code?: string };
+        const result = (await oaiRes.json()) as { text?: string; language?: string };
         return new Response(
           JSON.stringify({
             text: result.text ?? "",
-            language: result.language_code ?? null,
+            language: result.language ?? null,
           }),
           { status: 200, headers: { "Content-Type": "application/json" } },
         );

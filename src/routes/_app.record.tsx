@@ -201,7 +201,7 @@ function RecordPage() {
           recording_id: rec.id,
           text: text || "",
           language,
-          model: "elevenlabs/scribe_v2",
+          model: "openai/whisper-1",
         })
         .select("id")
         .single();

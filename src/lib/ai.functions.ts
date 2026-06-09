@@ -9,7 +9,7 @@ async function openaiChatCompletion(
   messages: Array<{ role: "system" | "user"; content: string }>,
   model = DEFAULT_MODEL,
 ): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured");
 
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
