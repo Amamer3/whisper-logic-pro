@@ -29,11 +29,16 @@ export const Route = createFileRoute("/api/transcribe")({
 
         // Read incoming multipart
         const form = await request.formData();
-        const file = form.get("file");
+        const fileEntry = form.get("file") as unknown;
         const languageCode = (form.get("language") as string) || "";
-        if (!(file instanceof File) && !(file instanceof Blob)) {
+        const isBlobLike =
+          typeof fileEntry === "object" &&
+          fileEntry !== null &&
+          typeof (fileEntry as Blob).arrayBuffer === "function";
+        if (!isBlobLike) {
           return new Response(JSON.stringify({ error: "Missing file" }), { status: 400 });
         }
+        const file = fileEntry as Blob & { name?: string };
 
         // Forward to ElevenLabs
         const ev = new FormData();
