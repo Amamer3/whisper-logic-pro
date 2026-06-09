@@ -9,7 +9,11 @@ export const Route = createFileRoute("/_app/pricing")({
   component: PricingPage,
 });
 
-const PLANS = [
+interface Plan {
+  id: string; name: string; price: string; period: string; desc: string;
+  features: string[]; cta: string; highlighted?: boolean;
+}
+const PLANS: Plan[] = [
   {
     id: "free",
     name: "Free",
