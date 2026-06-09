@@ -42,7 +42,7 @@ const PLANS: Plan[] = [
     features: ["Everything in Pro", "Shared workspace", "Shared recordings & prompts", "Team analytics", "Priority support"],
     cta: "Contact sales",
   },
-] as const;
+];
 
 function PricingPage() {
   return (
